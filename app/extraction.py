@@ -47,20 +47,22 @@ Rules. A wrong value can deny a patient's claim, so accuracy matters more than c
 - If a field is absent, illegible, cut off, or you are not sure which of several candidates is correct,
   set value to null and explain briefly in note.
 - source_text must quote, verbatim, the text the value was read from (including its label when present),
-  and page is the 1-based page it appears on. Use null for both when value is null.
+  and page is the 1-based page it appears on. When value is null, use "" for source_text and 0 for page.
+- note is "" unless there is something to explain.
 - Do not swap first and last names: "DOE, JANE" means last name DOE, first name JANE."""
 
 
 def _field_schema(description: str) -> dict:
-    nullable_str = {"anyOf": [{"type": "string"}, {"type": "null"}]}
+    # Only `value` is nullable: the API caps structured-output schemas at 16 union-typed parameters,
+    # so the other parts use "" / 0 for "none".
     return {
         "type": "object",
         "description": description,
         "properties": {
-            "value": nullable_str,
-            "source_text": nullable_str,
-            "page": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
-            "note": nullable_str,
+            "value": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+            "source_text": {"type": "string"},
+            "page": {"type": "integer"},
+            "note": {"type": "string"},
         },
         "required": ["value", "source_text", "page", "note"],
         "additionalProperties": False,

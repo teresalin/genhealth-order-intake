@@ -149,6 +149,26 @@ def test_invalid_npi_from_document_is_flagged_with_rejected_value(client, auth_h
     assert "check digit" in issue["message"]
 
 
+def test_output_schema_within_api_union_limit():
+    # The API rejects structured-output schemas with more than 16 union-typed (anyOf / type array) parameters.
+    def count_unions(node) -> int:
+        if isinstance(node, dict):
+            own = 1 if ("anyOf" in node or isinstance(node.get("type"), list)) else 0
+            return own + sum(count_unions(v) for v in node.values())
+        if isinstance(node, list):
+            return sum(count_unions(v) for v in node)
+        return 0
+
+    assert count_unions(extraction.OUTPUT_SCHEMA) <= 16
+
+
+def test_empty_string_sentinels_from_model_are_treated_as_missing():
+    raw = {**GOOD_RAW, "provider_name": {"value": None, "source_text": "", "page": 0, "note": ""}}
+    fields, issues = accept_fields(raw)
+    assert fields["provider_name"] is None
+    assert issues == [{"field": "provider_name", "message": "not found in document"}]
+
+
 def test_accept_fields_handles_missing_keys():
     fields, issues = accept_fields({})
     assert all(v is None for v in fields.values())
