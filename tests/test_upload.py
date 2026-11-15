@@ -65,7 +65,8 @@ def test_missing_field_is_left_null_and_flagged_then_fixable(client, auth_header
     assert body["provider_npi"] is None
     assert body["status"] == "needs_review"
     assert body["validation_issues"] == [
-        {"field": "provider_npi", "message": "not found in document: NPI field is blank on the form"}
+        {"field": "provider_npi", "message": "not found in document: NPI field is blank on the form",
+         "rejected_value": None}
     ]
     r = client.patch(f"/orders/{body['id']}", json={"provider_npi": "1234567893"}, headers=h)
     assert r.json()["status"] == "complete"
@@ -134,6 +135,18 @@ def test_accept_fields_rejects_unsupported_values(name, item, expected):
     assert fields[name] is None
     assert len(issues) == 1 and issues[0]["field"] == name
     assert expected in issues[0]["message"]
+
+
+def test_invalid_npi_from_document_is_flagged_with_rejected_value(client, auth_headers, fake_model):
+    # Mirrors the real sample fax: the printed NPI fails the CMS check digit.
+    fake_model({**GOOD_RAW, "provider_npi": field("9182734556", "Prescriber NPI: 9182734556")})
+    body = upload(client, auth_headers(), make_pdf(4)).json()
+    assert body["provider_npi"] is None
+    assert body["status"] == "needs_review"
+    [issue] = body["validation_issues"]
+    assert issue["field"] == "provider_npi"
+    assert issue["rejected_value"] == "9182734556"
+    assert "check digit" in issue["message"]
 
 
 def test_accept_fields_handles_missing_keys():

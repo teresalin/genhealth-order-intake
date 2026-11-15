@@ -86,6 +86,7 @@ class OrderUpdate(BaseModel):
 class ValidationIssue(BaseModel):
     field: str
     message: str
+    rejected_value: str | None = None  # what the document said, when it failed validation
 
 
 class OrderOut(BaseModel):

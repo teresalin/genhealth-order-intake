@@ -126,6 +126,11 @@ def call_model(pdf_bytes: bytes) -> dict:
         log.error("Extraction API error %s (request_id=%s): %s", e.status_code, e.request_id, e.message)
         raise ExtractionError(502, "Extraction service error")
 
+    u = response.usage
+    log.info(
+        "Extraction call: model=%s stop_reason=%s input_tokens=%s output_tokens=%s request_id=%s",
+        response.model, response.stop_reason, u.input_tokens, u.output_tokens, response._request_id,
+    )
     if response.stop_reason == "refusal":
         raise ExtractionError(422, "The document could not be processed")
     if response.stop_reason == "max_tokens":
@@ -207,12 +212,14 @@ def accept_fields(raw: dict) -> tuple[dict, list[dict]]:
             msg = "not found in document"
             issues.append({"field": name, "message": f"{msg}: {note}" if note else msg})
             continue
+        # A rejected value is shown to the reviewer in the issue, but never saved into the order field.
         if not source:
-            issues.append({"field": name, "message": "extracted value has no supporting source text"})
+            issues.append({"field": name, "message": "extracted value has no supporting source text",
+                           "rejected_value": str(value)})
             continue
         accepted, problem = _CHECKS[name](str(value), str(source))
         if problem:
-            issues.append({"field": name, "message": problem})
+            issues.append({"field": name, "message": problem, "rejected_value": str(value)})
         else:
             fields[name] = accepted
     return fields, issues
