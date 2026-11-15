@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./local.db"
     jwt_secret: str = DEFAULT_JWT_SECRET
     access_token_expire_minutes: int = 60
+    bcrypt_rounds: int = 12
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-opus-5-5"
     max_upload_mb: int = 20

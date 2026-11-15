@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app import auth, orders
 from app.db import Base, engine, get_db
 
 
@@ -17,6 +18,8 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="GenHealth DME Order Intake", version="0.1.0", lifespan=lifespan)
+app.include_router(auth.router)
+app.include_router(orders.router)
 
 
 @app.get("/health", tags=["health"])
