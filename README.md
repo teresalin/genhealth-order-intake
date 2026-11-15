@@ -52,6 +52,7 @@ orders; another user's order returns `404`, the same as a missing one.
 
 | Method | Path | Description | Success |
 |---|---|---|---|
+| `GET` | `/` | Service name, description, and links to `/docs` and `/health` (no auth) | `200` |
 | `GET` | `/health` | Database connectivity, deployed commit, whether extraction is configured | `200` (`503` if the DB is unreachable) |
 | `POST` | `/auth/register` | Create a user: JSON `{"email", "password"}` (password 8–72 bytes) | `201` (`409` if the email exists) |
 | `POST` | `/auth/token` | Log in: form fields `username` (your email) and `password` | `200` `{"access_token", "token_type": "bearer"}` |
@@ -236,7 +237,7 @@ so a schema change requires a migration tool or recreating the tables.
 pytest
 ```
 
-134 offline tests (no network, no API key, no cost; the Claude call is replaced with canned output):
+135 offline tests (no network, no API key, no cost; the Claude call is replaced with canned output):
 auth and token handling, order CRUD, cross-user isolation, upload checks, every acceptance check, and
 `tests/fixtures/recorded_extractions.json`, real model outputs recorded from synthetic documents and
 re-checked against the current validation rules.

@@ -23,6 +23,17 @@ app.include_router(auth.router)
 app.include_router(orders.router)
 
 
+@app.get("/", tags=["health"])
+def root():
+    """Static service description and pointers to the docs and health check."""
+    return {
+        "name": "GenHealth DME Order Intake API",
+        "description": "REST API for authenticated DME order intake and PDF extraction.",
+        "documentation": "/docs",
+        "health": "/health",
+    }
+
+
 @app.get("/health", tags=["health"])
 def health(db: Session = Depends(get_db)):
     # Commit is injected by Render at runtime; dialect proves which database is actually wired up.
