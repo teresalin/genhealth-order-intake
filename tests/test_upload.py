@@ -65,7 +65,7 @@ def test_missing_field_is_left_null_and_flagged_then_fixable(client, auth_header
     assert body["provider_npi"] is None
     assert body["status"] == "needs_review"
     assert body["validation_issues"] == [
-        {"field": "provider_npi", "message": "not found in document: NPI field is blank on the form",
+        {"field": "provider_npi", "message": "not extracted: NPI field is blank on the form",
          "rejected_value": None}
     ]
     r = client.patch(f"/orders/{body['id']}", json={"provider_npi": "1234567893"}, headers=h)

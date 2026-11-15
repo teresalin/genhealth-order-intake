@@ -211,8 +211,8 @@ def accept_fields(raw: dict) -> tuple[dict, list[dict]]:
         value, source, note = item.get("value"), item.get("source_text"), item.get("note")
         fields[name] = None
         if value is None or not str(value).strip():
-            msg = "not found in document"
-            issues.append({"field": name, "message": f"{msg}: {note}" if note else msg})
+            # The model's note says why (absent, illegible, or conflicting/ambiguous candidates).
+            issues.append({"field": name, "message": f"not extracted: {note}" if note else "not found in document"})
             continue
         # A rejected value is shown to the reviewer in the issue, but never saved into the order field.
         if not source:

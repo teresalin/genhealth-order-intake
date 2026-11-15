@@ -1,0 +1,372 @@
+[
+  {
+    "document": "FCM-DME-Referral-Form.pdf",
+    "model": "claude-opus-5-5",
+    "request_id": "req_011Ch5S6aAAwZs8VsJv7Lx7g",
+    "raw": {
+      "patient_first_name": {
+        "value": "Olivia",
+        "source_text": "First Name: Olivia",
+        "page": 1,
+        "note": ""
+      },
+      "patient_last_name": {
+        "value": "Carter",
+        "source_text": "Last Name: Carter",
+        "page": 1,
+        "note": ""
+      },
+      "patient_dob": {
+        "value": "1990-02-02",
+        "source_text": "DOB: 02/02/1990",
+        "page": 1,
+        "note": ""
+      },
+      "provider_name": {
+        "value": null,
+        "source_text": "",
+        "page": 0,
+        "note": "Conflicting candidates for the ordering provider. 'Physician Name: Maya Chen' is listed in Physicians Demographics, but the 'Physicians Signature' is Samuel Ortiz, who is also named as the Referring Physician. It is unclear which one is the ordering provider."
+      },
+      "provider_npi": {
+        "value": null,
+        "source_text": "",
+        "page": 0,
+        "note": "'NPI #: 1230004560' is listed next to Maya Chen, but the order is signed by Samuel Ortiz. Because the ordering provider is uncertain, this NPI cannot be confidently attributed to the ordering provider."
+      }
+    },
+    "expected_fields": {
+      "patient_first_name": "Olivia",
+      "patient_last_name": "Carter",
+      "patient_dob": "1990-02-02",
+      "provider_name": null,
+      "provider_npi": null
+    },
+    "expected_issue_fields": [
+      "provider_name",
+      "provider_npi"
+    ]
+  },
+  {
+    "document": "TomorrowHealth_DMEOrderForm.pdf",
+    "model": "claude-opus-5-5",
+    "request_id": "req_011Ch5S7RKth55vmcnuoSW3M",
+    "raw": {
+      "patient_first_name": {
+        "value": "Olivia",
+        "source_text": "Name: Olivia Carter",
+        "page": 2,
+        "note": ""
+      },
+      "patient_last_name": {
+        "value": "Carter",
+        "source_text": "Name: Olivia Carter",
+        "page": 2,
+        "note": ""
+      },
+      "patient_dob": {
+        "value": "1990-02-02",
+        "source_text": "DOB: 02 /02 /1990",
+        "page": 2,
+        "note": "Month and day are both 02, so the date reads the same either way."
+      },
+      "provider_name": {
+        "value": "Maya Chen",
+        "source_text": "Referring Provider Name: Maya Chen",
+        "page": 2,
+        "note": "This is the form's only provider field, labeled 'Referring Provider'. The cover sheet on page 1 lists the sender as 'Maya Chen, MD – Pacific Coast Pulmonary & Sleep Medicine'. No other ordering provider is named. The provider signature and date lines on the form are blank."
+      },
+      "provider_npi": {
+        "value": "1230004560",
+        "source_text": "NPI: 1230004560",
+        "page": 2,
+        "note": ""
+      }
+    },
+    "expected_fields": {
+      "patient_first_name": "Olivia",
+      "patient_last_name": "Carter",
+      "patient_dob": "1990-02-02",
+      "provider_name": "Maya Chen",
+      "provider_npi": "1230004560"
+    },
+    "expected_issue_fields": []
+  },
+  {
+    "document": "Integrated-IHS0002_DME_Order_Form_PRF.pdf",
+    "model": "claude-opus-5-5",
+    "request_id": "req_011Ch5S7pgaL9Vswtdg35S5x",
+    "raw": {
+      "patient_first_name": {
+        "value": "Olivia",
+        "source_text": "Patient Name Olivia Carter",
+        "page": 1,
+        "note": ""
+      },
+      "patient_last_name": {
+        "value": "Carter",
+        "source_text": "Patient Name Olivia Carter",
+        "page": 1,
+        "note": ""
+      },
+      "patient_dob": {
+        "value": "1990-02-02",
+        "source_text": "DOB 02/02/1990",
+        "page": 1,
+        "note": ""
+      },
+      "provider_name": {
+        "value": "Maya Chen",
+        "source_text": "Physician Name Maya Chen",
+        "page": 1,
+        "note": "The prescriber signature line is blank. John Doe is listed as the Ordering Contact Name (office contact), not the prescriber."
+      },
+      "provider_npi": {
+        "value": "1230004560",
+        "source_text": "NPI # 1230004560",
+        "page": 1,
+        "note": "1234567890 is the Ordering Office Phone, not the NPI."
+      }
+    },
+    "expected_fields": {
+      "patient_first_name": "Olivia",
+      "patient_last_name": "Carter",
+      "patient_dob": "1990-02-02",
+      "provider_name": "Maya Chen",
+      "provider_npi": "1230004560"
+    },
+    "expected_issue_fields": []
+  },
+  {
+    "document": "Face-to-face-sample_2.pdf",
+    "model": "claude-opus-5-5",
+    "request_id": "req_011Ch5S8B9dDatRk2JW8nhsZ",
+    "raw": {
+      "patient_first_name": {
+        "value": "Olivia",
+        "source_text": "Patient Name: Olivia Carter",
+        "page": 1,
+        "note": ""
+      },
+      "patient_last_name": {
+        "value": "Carter",
+        "source_text": "Patient Name: Olivia Carter",
+        "page": 1,
+        "note": ""
+      },
+      "patient_dob": {
+        "value": "1990-02-02",
+        "source_text": "DOB: 02/02/1990",
+        "page": 1,
+        "note": ""
+      },
+      "provider_name": {
+        "value": "Maya Chen",
+        "source_text": "Doctors Name: Maya Chen",
+        "page": 1,
+        "note": "Listed as the physician/treating practitioner on the face-to-face form. The signature line on page 2 is blank, so the form is unsigned."
+      },
+      "provider_npi": {
+        "value": "1230004560",
+        "source_text": "NPI #: 1230004560",
+        "page": 1,
+        "note": ""
+      }
+    },
+    "expected_fields": {
+      "patient_first_name": "Olivia",
+      "patient_last_name": "Carter",
+      "patient_dob": "1990-02-02",
+      "provider_name": "Maya Chen",
+      "provider_npi": "1230004560"
+    },
+    "expected_issue_fields": []
+  },
+  {
+    "document": "S1_missing_dob_and_npi.pdf",
+    "model": "claude-opus-5-5",
+    "request_id": "req_011Ch5S918eaWyioUqpuLEv3",
+    "raw": {
+      "patient_first_name": {
+        "value": "Olivia",
+        "source_text": "Patient First Name: Olivia",
+        "page": 1,
+        "note": ""
+      },
+      "patient_last_name": {
+        "value": "Carter",
+        "source_text": "Last Name: Carter",
+        "page": 1,
+        "note": ""
+      },
+      "patient_dob": {
+        "value": null,
+        "source_text": "",
+        "page": 0,
+        "note": "Date of Birth field is blank on the form; no DOB written anywhere in the document."
+      },
+      "provider_name": {
+        "value": "Maya Chen, MD",
+        "source_text": "Ordering Physician: Maya Chen, MD",
+        "page": 1,
+        "note": ""
+      },
+      "provider_npi": {
+        "value": null,
+        "source_text": "",
+        "page": 0,
+        "note": "NPI field is blank on the form; no NPI written anywhere in the document."
+      }
+    },
+    "expected_fields": {
+      "patient_first_name": "Olivia",
+      "patient_last_name": "Carter",
+      "patient_dob": null,
+      "provider_name": "Maya Chen, MD",
+      "provider_npi": null
+    },
+    "expected_issue_fields": [
+      "patient_dob",
+      "provider_npi"
+    ]
+  },
+  {
+    "document": "S2_invalid_npi_no_credentials.pdf",
+    "model": "claude-opus-5-5",
+    "request_id": "req_011Ch5S9E5m3t6hJPoyBXu6N",
+    "raw": {
+      "patient_first_name": {
+        "value": "OLIVIA",
+        "source_text": "Patient: CARTER, OLIVIA",
+        "page": 1,
+        "note": ""
+      },
+      "patient_last_name": {
+        "value": "CARTER",
+        "source_text": "Patient: CARTER, OLIVIA",
+        "page": 1,
+        "note": ""
+      },
+      "patient_dob": {
+        "value": "1990-02-02",
+        "source_text": "DOB: 02/02/1990",
+        "page": 1,
+        "note": ""
+      },
+      "provider_name": {
+        "value": "Maya Chen",
+        "source_text": "Prescriber: Maya Chen",
+        "page": 1,
+        "note": ""
+      },
+      "provider_npi": {
+        "value": "1230004561",
+        "source_text": "Prescriber NPI: 1230004561",
+        "page": 1,
+        "note": ""
+      }
+    },
+    "expected_fields": {
+      "patient_first_name": "OLIVIA",
+      "patient_last_name": "CARTER",
+      "patient_dob": "1990-02-02",
+      "provider_name": "Maya Chen",
+      "provider_npi": null
+    },
+    "expected_issue_fields": [
+      "provider_npi"
+    ]
+  },
+  {
+    "document": "S3_conflicting_dob_multi_provider.pdf",
+    "model": "claude-opus-5-5",
+    "request_id": "req_011Ch5S9RfXs121t9BySu5g6",
+    "raw": {
+      "patient_first_name": {
+        "value": "Olivia",
+        "source_text": "Patient: Olivia Carter",
+        "page": 2,
+        "note": ""
+      },
+      "patient_last_name": {
+        "value": "Carter",
+        "source_text": "Patient: Olivia Carter",
+        "page": 2,
+        "note": ""
+      },
+      "patient_dob": {
+        "value": null,
+        "source_text": "",
+        "page": 0,
+        "note": "The dates of birth conflict. The referral cover sheet (page 1) says \"DOB: 02/02/1990\", but the standard written order (page 2) says \"Date of Birth: 02/20/1990\". The correct date cannot be confirmed, so it needs manual verification."
+      },
+      "provider_name": {
+        "value": "Maya Chen, MD",
+        "source_text": "Ordering Physician: Maya Chen, MD",
+        "page": 2,
+        "note": "Samuel Ortiz, MD on page 1 is the referring physician, not the ordering provider. Maya Chen, MD signed the order."
+      },
+      "provider_npi": {
+        "value": "1230004560",
+        "source_text": "Ordering Physician NPI: 1230004560",
+        "page": 2,
+        "note": "The NPI 1230004529 on page 1 belongs to the referring physician, not the ordering provider."
+      }
+    },
+    "expected_fields": {
+      "patient_first_name": "Olivia",
+      "patient_last_name": "Carter",
+      "patient_dob": null,
+      "provider_name": "Maya Chen, MD",
+      "provider_npi": "1230004560"
+    },
+    "expected_issue_fields": [
+      "patient_dob"
+    ]
+  },
+  {
+    "document": "S4_rotated_blurry_lowres.pdf",
+    "model": "claude-opus-5-5",
+    "request_id": "req_011Ch5S9o49St7PhmfqWvj6Y",
+    "raw": {
+      "patient_first_name": {
+        "value": "Olivia",
+        "source_text": "Patient First Name: Olivia",
+        "page": 1,
+        "note": "Page is rotated and noisy, but the text is legible."
+      },
+      "patient_last_name": {
+        "value": "Carter",
+        "source_text": "Last Name: Carter",
+        "page": 1,
+        "note": ""
+      },
+      "patient_dob": {
+        "value": "1990-02-02",
+        "source_text": "DOB: 02/02/1990",
+        "page": 1,
+        "note": ""
+      },
+      "provider_name": {
+        "value": "Maya Chen, MD",
+        "source_text": "Ordering Physician: Maya Chen, MD",
+        "page": 1,
+        "note": "Samuel Ortiz, MD is listed as the referring physician. Maya Chen, MD is the named ordering physician and signer."
+      },
+      "provider_npi": {
+        "value": "1230004560",
+        "source_text": "NPI: 1230004560",
+        "page": 1,
+        "note": "Read from a blurry scan. The value passes the NPI check-digit validation."
+      }
+    },
+    "expected_fields": {
+      "patient_first_name": "Olivia",
+      "patient_last_name": "Carter",
+      "patient_dob": "1990-02-02",
+      "provider_name": "Maya Chen, MD",
+      "provider_npi": "1230004560"
+    },
+    "expected_issue_fields": []
+  }
+]
