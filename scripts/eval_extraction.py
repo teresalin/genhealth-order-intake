@@ -2,6 +2,7 @@
 
 usage: eval_runner.py REPO OUT_JSON PDF [PDF ...]
 """
+import io
 import json
 import logging
 import os
@@ -25,6 +26,8 @@ lg = logging.getLogger("app.extraction")
 lg.setLevel(logging.INFO)
 lg.addHandler(cap)
 
+import pypdf  # noqa: E402
+
 from app import extraction  # noqa: E402
 
 results = []
@@ -33,8 +36,10 @@ for path in pdfs:
     t = time.time()
     entry = {"file": os.path.basename(path)}
     try:
-        raw = extraction.call_model(open(path, "rb").read())
-        fields, issues = extraction.accept_fields(raw)
+        data = open(path, "rb").read()
+        raw = extraction.call_model(data)
+        page_count = len(pypdf.PdfReader(io.BytesIO(data)).pages)
+        fields, issues = extraction.accept_fields(raw, page_count=page_count)
         entry.update(raw=raw, accepted={k: (str(v) if v is not None else None) for k, v in fields.items()},
                      issues=issues, status="needs_review" if issues else "complete")
     except extraction.ExtractionError as e:

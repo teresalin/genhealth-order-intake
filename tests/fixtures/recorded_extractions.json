@@ -45,7 +45,8 @@
     "expected_issue_fields": [
       "provider_name",
       "provider_npi"
-    ]
+    ],
+    "page_count": 1
   },
   {
     "document": "TomorrowHealth_DMEOrderForm.pdf",
@@ -90,7 +91,8 @@
       "provider_name": "Maya Chen",
       "provider_npi": "1230004560"
     },
-    "expected_issue_fields": []
+    "expected_issue_fields": [],
+    "page_count": 3
   },
   {
     "document": "Integrated-IHS0002_DME_Order_Form_PRF.pdf",
@@ -135,7 +137,8 @@
       "provider_name": "Maya Chen",
       "provider_npi": "1230004560"
     },
-    "expected_issue_fields": []
+    "expected_issue_fields": [],
+    "page_count": 1
   },
   {
     "document": "Face-to-face-sample_2.pdf",
@@ -180,7 +183,8 @@
       "provider_name": "Maya Chen",
       "provider_npi": "1230004560"
     },
-    "expected_issue_fields": []
+    "expected_issue_fields": [],
+    "page_count": 2
   },
   {
     "document": "S1_missing_dob_and_npi.pdf",
@@ -228,7 +232,8 @@
     "expected_issue_fields": [
       "patient_dob",
       "provider_npi"
-    ]
+    ],
+    "page_count": 1
   },
   {
     "document": "S2_invalid_npi_no_credentials.pdf",
@@ -275,7 +280,8 @@
     },
     "expected_issue_fields": [
       "provider_npi"
-    ]
+    ],
+    "page_count": 1
   },
   {
     "document": "S3_conflicting_dob_multi_provider.pdf",
@@ -322,7 +328,8 @@
     },
     "expected_issue_fields": [
       "patient_dob"
-    ]
+    ],
+    "page_count": 2
   },
   {
     "document": "S4_rotated_blurry_lowres.pdf",
@@ -367,6 +374,7 @@
       "provider_name": "Maya Chen, MD",
       "provider_npi": "1230004560"
     },
-    "expected_issue_fields": []
+    "expected_issue_fields": [],
+    "page_count": 1
   }
 ]

@@ -168,6 +168,45 @@ def _check_name(value: str, source: str) -> tuple[str | None, str | None]:
     return value, None
 
 
+_MONTHS = {m: i for i, m in enumerate(
+    ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], start=1)}
+_MONTH_RE = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?"
+_SEP = r"\s*[/.\-]\s*"
+# (pattern, order of the captured groups). Numeric dates in US documents are month/day/year.
+_DATE_PATTERNS = [
+    (re.compile(rf"(?<!\d)(\d{{4}}){_SEP}(\d{{1,2}}){_SEP}(\d{{1,2}})(?!\d)"), "ymd"),          # 1990-02-02
+    (re.compile(rf"(?<!\d)(\d{{1,2}}){_SEP}(\d{{1,2}}){_SEP}(\d{{2,4}})(?!\d)"), "mdy"),        # 02 / 02 / 1990
+    (re.compile(rf"\b{_MONTH_RE}\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s+(\d{{2,4}})(?!\d)", re.I), "Mdy"),  # Feb 2, 1990
+    (re.compile(rf"(?<!\d)(\d{{1,2}})(?:st|nd|rd|th)?\s+{_MONTH_RE},?\s+(\d{{2,4}})(?!\d)", re.I), "dMy"),  # 2 Feb 1990
+]
+_DOB_LABEL = re.compile(r"\bdob\b|\bd\.\s*o\.\s*b\b|\bdate\s+of\s+birth\b|\bbirth\s*date\b", re.I)
+# Text allowed between a DOB label and its date: punctuation, spaces, blank-line underscores and an
+# optional format hint such as "(mm/dd/yyyy)". Any other word (e.g. another field's label) breaks the link.
+_FORMAT_HINT = re.compile(r"\(?\s*[mdy]{1,4}\s*[/.\-]\s*[mdy]{1,4}\s*[/.\-]\s*[mdy]{2,4}\s*\)?", re.I)
+_LABEL_GAP_OK = re.compile(r"[\s:._\-()#]*")
+
+
+def _date_candidates(source: str) -> list[tuple[int, str, int, int]]:
+    """All dates written in `source` as (position, year_text, month, day), left to right."""
+    found = []
+    masked = source
+    for pattern, order in _DATE_PATTERNS:
+        for m in pattern.finditer(masked):
+            g = m.groups()
+            if order == "ymd":
+                year, month, day = g[0], int(g[1]), int(g[2])
+            elif order == "mdy":
+                month, day, year = int(g[0]), int(g[1]), g[2]
+            elif order == "Mdy":
+                month, day, year = _MONTHS[g[0].lower()[:3]], int(g[1]), g[2]
+            else:
+                day, month, year = int(g[0]), _MONTHS[g[1].lower()[:3]], g[2]
+            found.append((m.start(), year, month, day))
+        # Blank out matches so a later, looser pattern cannot re-read part of the same date.
+        masked = pattern.sub(lambda m: " " * len(m.group(0)), masked)
+    return sorted(found)
+
+
 def _check_dob(value: str, source: str) -> tuple[date | None, str | None]:
     try:
         dob = date.fromisoformat(value.strip())
@@ -175,12 +214,34 @@ def _check_dob(value: str, source: str) -> tuple[date | None, str | None]:
         return None, "extracted value is not a valid YYYY-MM-DD date"
     if err := dob_error(dob):
         return None, f"date of birth {err}"
-    # The source must show the full 4-digit year (a 2-digit year leaves the century to guesswork)
-    # and the day number.
-    if not re.search(rf"(?<!\d){dob.year}(?!\d)", source):
-        return None, "four-digit birth year not found in the quoted source text"
-    if not re.search(rf"(?<!\d)0?{dob.day}(?!\d)", source):
-        return None, "extracted value is not supported by the quoted source text"
+
+    candidates = _date_candidates(source)
+    # When the quote labels a date of birth, only a date written right after a label counts; other dates
+    # in the quote (order, signature, visit dates) are not candidates. A blank DOB field followed by some
+    # other date ("DOB: ____  Date: 03/01/2026") therefore yields no candidate rather than the wrong date.
+    labels = [m.end() for m in _DOB_LABEL.finditer(source)]
+    if labels:
+        labeled = []
+        for end in labels:
+            after = [c for c in candidates if c[0] >= end]
+            if not after:
+                continue
+            gap = _FORMAT_HINT.sub("", source[end:after[0][0]])
+            if _LABEL_GAP_OK.fullmatch(gap) and after[0] not in labeled:
+                labeled.append(after[0])
+        if not labeled:
+            return None, "no date follows the date-of-birth label in the quoted source text"
+        candidates = labeled
+    if not candidates:
+        return None, "no date found in the quoted source text"
+    if any(len(year) != 4 for _, year, _, _ in candidates):
+        return None, "four-digit birth year not found in the quoted source text (two-digit years are not expanded)"
+    distinct = {(int(year), month, day) for _, year, month, day in candidates}
+    if len(distinct) > 1:
+        what = "conflicting dates of birth" if labels else "several dates and none is labeled as date of birth"
+        return None, f"quoted source text contains {what}"
+    if distinct.pop() != (dob.year, dob.month, dob.day):
+        return None, "extracted value does not match the date in the quoted source text"
     return dob, None
 
 
@@ -202,13 +263,16 @@ _CHECKS = {
 }
 
 
-def accept_fields(raw: dict) -> tuple[dict, list[dict]]:
-    """Apply deterministic checks to the model output. Returns (accepted_fields, issues)."""
+def accept_fields(raw: dict, page_count: int) -> tuple[dict, list[dict]]:
+    """Apply deterministic checks to the model output. Returns (accepted_fields, issues).
+
+    `page_count` is the real number of pages in the uploaded PDF; every accepted value must cite one of them.
+    """
     fields: dict = {}
     issues: list[dict] = []
     for name in REQUIRED_ORDER_FIELDS:
         item = raw.get(name) or {}
-        value, source, note = item.get("value"), item.get("source_text"), item.get("note")
+        value, source, note, page = item.get("value"), item.get("source_text"), item.get("note"), item.get("page")
         fields[name] = None
         if value is None or not str(value).strip():
             # The model's note says why (absent, illegible, or conflicting/ambiguous candidates).
@@ -218,6 +282,11 @@ def accept_fields(raw: dict) -> tuple[dict, list[dict]]:
         if not source:
             issues.append({"field": name, "message": "extracted value has no supporting source text",
                            "rejected_value": str(value)})
+            continue
+        # bool is an int subclass; reject it explicitly. Page 0 is only meaningful for unextracted fields.
+        if isinstance(page, bool) or not isinstance(page, int) or not 1 <= page <= page_count:
+            issues.append({"field": name, "rejected_value": str(value),
+                           "message": f"cited page {page!r} is not a page of this document (1-{page_count})"})
             continue
         accepted, problem = _CHECKS[name](str(value), str(source))
         if problem:

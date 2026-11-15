@@ -73,6 +73,17 @@ def test_missing_field_is_left_null_and_flagged_then_fixable(client, auth_header
     assert r.json()["validation_issues"] == []
 
 
+def test_upload_checks_cited_pages_against_real_page_count(client, auth_headers, fake_model):
+    # The model cites page 3, which exists in a 3-page upload but not in a 2-page one.
+    fake_model({**GOOD_RAW, "provider_npi": field("1234567893", "NPI: 1234 567 893", page=3)})
+    h = auth_headers()
+    assert upload(client, h, make_pdf(3)).json()["status"] == "complete"
+    body = upload(client, h, make_pdf(2)).json()
+    assert body["provider_npi"] is None
+    assert body["status"] == "needs_review"
+    assert "not a page of this document (1-2)" in body["validation_issues"][0]["message"]
+
+
 def test_upload_rejects_non_pdf_and_requires_auth(client, auth_headers, fake_model):
     h = auth_headers()
     assert upload(client, h, b"hello, not a pdf", name="x.pdf").status_code == 415
@@ -105,7 +116,7 @@ def test_extraction_errors_are_surfaced(client, auth_headers, monkeypatch):
 # ---- deterministic acceptance checks ----
 
 def test_accept_fields_all_good():
-    fields, issues = accept_fields(GOOD_RAW)
+    fields, issues = accept_fields(GOOD_RAW, page_count=1)
     assert issues == []
     assert str(fields["patient_dob"]) == "1950-04-12"
     assert fields["provider_npi"] == "1234567893"
@@ -128,7 +139,7 @@ def test_accept_fields_all_good():
     ],
 )
 def test_accept_fields_rejects_unsupported_values(name, item, expected):
-    fields, issues = accept_fields({**GOOD_RAW, name: item})
+    fields, issues = accept_fields({**GOOD_RAW, name: item}, page_count=1)
     if expected is None:  # source defaults to the value itself
         assert fields[name] is not None
         return
@@ -164,12 +175,12 @@ def test_output_schema_within_api_union_limit():
 
 def test_empty_string_sentinels_from_model_are_treated_as_missing():
     raw = {**GOOD_RAW, "provider_name": {"value": None, "source_text": "", "page": 0, "note": ""}}
-    fields, issues = accept_fields(raw)
+    fields, issues = accept_fields(raw, page_count=1)
     assert fields["provider_name"] is None
     assert issues == [{"field": "provider_name", "message": "not found in document"}]
 
 
 def test_accept_fields_handles_missing_keys():
-    fields, issues = accept_fields({})
+    fields, issues = accept_fields({}, page_count=1)
     assert all(v is None for v in fields.values())
     assert len(issues) == 5
