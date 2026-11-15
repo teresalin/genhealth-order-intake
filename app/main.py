@@ -7,6 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app import auth, orders
+from app.config import get_settings
 from app.db import Base, engine, get_db
 
 
@@ -25,7 +26,11 @@ app.include_router(orders.router)
 @app.get("/health", tags=["health"])
 def health(db: Session = Depends(get_db)):
     # Commit is injected by Render at runtime; dialect proves which database is actually wired up.
-    info = {"commit": os.environ.get("RENDER_GIT_COMMIT", "unknown"), "database_backend": engine.dialect.name}
+    info = {
+        "commit": os.environ.get("RENDER_GIT_COMMIT", "unknown"),
+        "database_backend": engine.dialect.name,
+        "extraction_configured": bool(get_settings().anthropic_api_key),
+    }
     try:
         db.execute(text("SELECT 1"))
     except Exception:

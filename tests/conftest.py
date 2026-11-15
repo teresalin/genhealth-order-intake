@@ -5,6 +5,8 @@ os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 os.environ["APP_ENV"] = "test"
 os.environ["JWT_SECRET"] = "test-secret-that-is-long-enough-for-hs256-signing"
 os.environ["BCRYPT_ROUNDS"] = "4"
+# Tests never call the real model; an empty key overrides any key in a local .env file.
+os.environ["ANTHROPIC_API_KEY"] = ""
 
 import pytest
 from fastapi.testclient import TestClient

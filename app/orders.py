@@ -1,13 +1,71 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+import io
+import os
+
+import pypdf
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app import extraction
 from app.auth import get_current_user
+from app.config import get_settings
 from app.db import get_db
 from app.models import Order, User
 from app.schemas import OrderCreate, OrderOut, OrderUpdate
 
 router = APIRouter(prefix="/orders", tags=["orders"])
+MAX_PAGES = 100
+
+
+def _read_pdf_upload(file: UploadFile) -> bytes:
+    limit = get_settings().max_upload_mb * 1024 * 1024
+    data = file.file.read(limit + 1)
+    if len(data) > limit:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, f"File exceeds {get_settings().max_upload_mb} MB")
+    if not data.startswith(b"%PDF-"):
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "File is not a PDF")
+    try:
+        reader = pypdf.PdfReader(io.BytesIO(data))
+        if reader.is_encrypted:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Encrypted PDFs are not supported")
+        pages = len(reader.pages)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "PDF could not be read")
+    if pages == 0 or pages > MAX_PAGES:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, f"PDF must have 1 to {MAX_PAGES} pages")
+    return data
+
+
+@router.post("/upload", response_model=OrderOut, status_code=status.HTTP_201_CREATED)
+def upload_order(
+    file: UploadFile = File(..., description="DME order PDF (scanned or digital)"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create an order from a PDF. Fields that are missing or fail validation are left null and
+    listed in `validation_issues`; the order is then `needs_review` and can be completed with PATCH.
+    The PDF itself is not stored."""
+    pdf = _read_pdf_upload(file)
+    try:
+        raw = extraction.call_model(pdf)
+    except extraction.ExtractionError as e:
+        raise HTTPException(e.status_code, e.detail)
+    fields, issues = extraction.accept_fields(raw)
+    filename = os.path.basename(file.filename or "upload.pdf")[:255]
+    order = Order(
+        owner_id=user.id,
+        source="pdf_upload",
+        source_filename=filename,
+        validation_issues=issues,
+        extraction_raw=raw,
+        **fields,
+    )
+    order.refresh_status()
+    db.add(order)
+    db.commit()
+    return order
 
 
 def get_owned_order(order_id: int, user: User, db: Session) -> Order:
