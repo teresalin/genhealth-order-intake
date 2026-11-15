@@ -4,7 +4,11 @@ from app.config import Settings
 def test_health_reports_ok(client):
     resp = client.get("/health")
     assert resp.status_code == 200
-    assert resp.json() == {"status": "ok", "database": "ok"}
+    body = resp.json()
+    assert body["status"] == "ok"
+    assert body["database"] == "ok"
+    assert body["database_backend"] == "sqlite"
+    assert "commit" in body
 
 
 def test_postgres_url_is_normalized():

@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
@@ -20,8 +21,10 @@ app = FastAPI(title="GenHealth DME Order Intake", version="0.1.0", lifespan=life
 
 @app.get("/health", tags=["health"])
 def health(db: Session = Depends(get_db)):
+    # Commit is injected by Render at runtime; dialect proves which database is actually wired up.
+    info = {"commit": os.environ.get("RENDER_GIT_COMMIT", "unknown"), "database_backend": engine.dialect.name}
     try:
         db.execute(text("SELECT 1"))
     except Exception:
-        return JSONResponse(status_code=503, content={"status": "error", "database": "unavailable"})
-    return {"status": "ok", "database": "ok"}
+        return JSONResponse(status_code=503, content={"status": "error", "database": "unavailable", **info})
+    return {"status": "ok", "database": "ok", **info}
